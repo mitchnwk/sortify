@@ -22,7 +22,7 @@
 
 
 import MyPackage
-import sys, getopt
+import sys, getopt, os
 
 __version__ = '0.1.0'
 def Usage():
@@ -57,7 +57,15 @@ def main(argv):
     elif path4pics == path2trash:
         print "pics path and trash path must different"
         Usage()
+        exit()    
+    # check if trash path is not existing; create it otherwise
+    if not os.path.exists(path2trash):
+        os.makedirs(path2trash)
+    # check if input path is existing; break otherwise
+    if not os.path.exists(path4pics):
+        print "Picture directory does not exist. Please check"
         exit()
+        
     NbMovedFiles = MyPackage.DetectDuplicatedPics(path4pics,path2trash,Mylogger)
     if NbMovedFiles <>0: 
         Mylogger.info('Numbed of files trashed :%s',NbMovedFiles)
