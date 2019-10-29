@@ -1,0 +1,2 @@
+# sortify
+Detect duplicated pictures
