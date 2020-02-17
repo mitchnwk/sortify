@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 
-## Copyright (C) 2019 Michel Nowak <mitch@mitchnwk.com
+## Copyright (C) 2020 Michel Nowak <mitch@mitchnwk.com
 ## This file is part of Sortify
  
 
@@ -65,18 +65,24 @@ def main(argv):
     if not os.path.exists(path4pics):
         print "Picture directory does not exist. Please check"
         exit()
-        
-    NbMovedFiles = MyPackage.DetectDuplicatedPics(path4pics,path2trash,Mylogger)
-    if NbMovedFiles <>0: 
-        Mylogger.info('Numbed of files trashed :%s',NbMovedFiles)
+    Mylogger.info('detect duplicates...')
+    NbTrashedFiles = MyPackage.DetectDuplicatedPics(path4pics,path2trash,Mylogger)
+    if NbTrashedFiles <>0: 
+        Mylogger.info('Numbers of files trashed :%s',NbTrashedFiles)
     else:
         Mylogger.info('No duplicated pictures found!')
     Mylogger.info('renaming remaining file...')
     NbRenamedFiles = MyPackage.RenamePictures(path4pics,Mylogger)
     if NbRenamedFiles <>0: 
-        Mylogger.info('Numbed of files renamed :%s',NbRenamedFiles)
+        Mylogger.info('Numbers of files renamed :%s',NbRenamedFiles)
     else:
         Mylogger.info('No file renamed!')
+    Mylogger.info('Sort remaining files...')
+    NbMovedFiles = MyPackage.MovePictures(path4pics,Mylogger)
+    if NbMovedFiles <>0: 
+        Mylogger.info('Numbers of files moved :%s',NbMovedFiles)
+    else:
+        Mylogger.info('No file moved!')
     return 
 
 if __name__ == "__main__":
