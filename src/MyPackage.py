@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 
-## Copyright (C) 2019 Michel Nowak <mitch@mitchnwk.com
+## Copyright (C) 2020 Michel Nowak <mitch@mitchnwk.com
 ## This file is part of Sortify
  
 
@@ -27,6 +27,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import shutil 
 
+# Supported files
 listExt = ['.jpg', '.png', '.gif', '.bmp', '.JPG', '.BMP', '.GIF','.PNG']
 
 def CreateLogger():
@@ -40,6 +41,9 @@ def CreateLogger():
     formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
     # create handler to redirect log to a file in 'append' mode 
     # with a backup and a maximal length to 1Mo
+    if not os.path.exists('../log/activity.log'):
+        os.makedirs('../log')
+    
     file_handler = RotatingFileHandler('../log/activity.log', 'a', 1000000, 1)
     # add this handler to logger
     file_handler.setLevel(logging.DEBUG)
@@ -52,7 +56,7 @@ def CreateLogger():
     logger.addHandler(steam_handler)
     return logger
 
-
+#Detect duplicate by computing a Hashkey
 def DetectDuplicatedPics(path4pics,path2trash,mylogger):    
     dicoDupli = {}
     movedItems = 0    
@@ -121,17 +125,55 @@ def RenamePictures(path4pics,mylogger):
                 extension = os.path .splitext(file)[1]
                 fileName = root + os.sep + file
                 # check if filename starts with a date
-                [date,sep,part2] = file.partition('_')
-                if date.isdigit():
-                    mylogger.info('fileName already has a date')
+                #[date,sep,part2] = file.partition('_')
+                #if date.isdigit():
+                #    mylogger.info('fileName already has a date')
+                #else:
+                mylogger.info('get EXIF info for: %s', fileName)
+                dateFile = GetFileDateInfo(fileName)                   
+                if dateFile <> None:                        
+                    NewFileName = root + os.sep + dateFile[3] + extension                                               
+                    os.rename(fileName,NewFileName)
+                    mylogger.info('%s renamed in :%s', fileName, NewFileName)
+                    NbRenamedFiles+=1                   
                 else:
-                    mylogger.info('get EXIF info for: %s', fileName)
-                    dateFile = GetFileDateInfo(fileName)
-                    if dateFile <> None:
-                        outFileName = root + os.sep +dateFile[3] + extension
-                        mylogger.info('%s renamed in :%s', fileName, outFileName)
-                        os.rename(fileName,outFileName)
-                        NbRenamedFiles+=1
-                    else:
-                        mylogger.info('unable to retrieve EXIF info for: %s', fileName)
+                    mylogger.info('unable to retrieve EXIF info for: %s', fileName)
     return NbRenamedFiles
+
+def MovePictures(path4pics,mylogger):
+#Move renamed pictures  using their exif date
+    NbMovedFiles = 0
+    for root, dirs, files in os.walk(path4pics):
+        for file in files:
+            if os.path .splitext(file)[1] in listExt:
+                extension = os.path .splitext(file)[1] 
+                fileName = root + os.sep + file
+                try:
+                    #get date info 
+                    dateFile = GetFileDateInfo(fileName)      
+                    # compute new destination path based on Year
+                    outFilePath = path4pics + os.sep + dateFile[2]
+                    newFileName = outFilePath + os.sep + file              
+                    # check if destination path is existing create if not
+                    if not os.path.exists(outFilePath):
+                        os.makedirs(outFilePath)
+                    # check if file already exists
+                    if not os.path.exists(newFileName):     
+                        print 'new file , ready to copy : ' + file       
+                        # copy the picture to the organised structure
+                        shutil.copy2(fileName,newFileName)  
+                        # verify if file is the same and display output
+                        print 'moved done'
+                        if hash_file(fileName) == hash_file(newFileName):
+                            print 'File copied with success to ' + outFilePath
+                            os.remove(fileName)
+                            mylogger.info('%s moved to :%s', file, outFilePath)
+                            NbMovedFiles+=1                   
+                        else:
+                            print 'File failed to copy :( ' + file
+                            mylogger.info('%s failed to be moved to :%s', fileName, outFilePath)
+                    else:
+                        mylogger.info('%s already exists in %s. Skipped...', fileName, outFilePath)
+                except:
+                    print 'File has no exif data skipped ' + file
+    return NbMovedFiles
