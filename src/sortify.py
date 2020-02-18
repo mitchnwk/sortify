@@ -51,8 +51,8 @@ def main(argv):
         elif opt in ("-d","--dest"):
             destpath = arg
         
-    #path4pics = '/home/dargo/MyDev/pics'
-    #path2trash = '/home/dargo/MyDev/trash2'
+
+
     if path4pics == "" or path2trash == "" or destpath == "":
         print "missing args"
         Usage()
@@ -61,6 +61,10 @@ def main(argv):
         print "pics path and trash path must different"
         Usage()
         exit()    
+    elif path4pics == destpath:
+        print "pics path and trash path must different"
+        Usage()
+        exit()        
     elif destpath == path2trash:
         print "pics path dest and trash path must different"
         Usage()
