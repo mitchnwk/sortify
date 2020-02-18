@@ -62,7 +62,7 @@ def main(argv):
         Usage()
         exit()    
     elif path4pics == destpath:
-        print "pics path and trash path must different"
+        print "pics path and dest path must different"
         Usage()
         exit()        
     elif destpath == path2trash:
