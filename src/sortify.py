@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 
-## Copyright (C) 2020 Michel Nowak <mitch@mitchnwk.com
+## Copyright (C) 2019 Michel Nowak <mitch@mitchnwk.com
 ## This file is part of Sortify
  
 
@@ -26,14 +26,15 @@ import sys, getopt, os
 
 __version__ = '0.1.0'
 def Usage():
-    print 'Usage: sortify.py -p <path4pics> -t <path2trash>'
+    print 'Usage: sortify.py -p <path4pics> -d <destpath> -t <path2trash>'
     return
 def main(argv):
     path2trash=""
     path4pics=""
+    destpath=""
     Mylogger=MyPackage.CreateLogger()
-    ShortOptions = "hp:t:"
-    LongOptions = ["help","path","trash"]
+    ShortOptions = "hp:d:t:"
+    LongOptions = ["help","path","dest","trash"]
     try:
         opts,args = getopt.getopt(argv,ShortOptions,LongOptions)
     except getopt.error as err:
@@ -47,10 +48,12 @@ def main(argv):
             path4pics = arg
         elif opt in ("-t","--trash"):
             path2trash = arg
+        elif opt in ("-d","--dest"):
+            destpath = arg
         
     #path4pics = '/home/dargo/MyDev/pics'
     #path2trash = '/home/dargo/MyDev/trash2'
-    if path4pics == "" or path2trash == "":
+    if path4pics == "" or path2trash == "" or destpath == "":
         print "missing args"
         Usage()
         exit()
@@ -58,9 +61,15 @@ def main(argv):
         print "pics path and trash path must different"
         Usage()
         exit()    
+    elif destpath == path2trash:
+        print "pics path dest and trash path must different"
+        Usage()
+        exit()    
     # check if trash path is not existing; create it otherwise
     if not os.path.exists(path2trash):
         os.makedirs(path2trash)
+    if not os.path.exists(destpath):
+        os.makedirs(destpath)
     # check if input path is existing; break otherwise
     if not os.path.exists(path4pics):
         print "Picture directory does not exist. Please check"
@@ -78,7 +87,7 @@ def main(argv):
     else:
         Mylogger.info('No file renamed!')
     Mylogger.info('Sort remaining files...')
-    NbMovedFiles = MyPackage.MovePictures(path4pics,Mylogger)
+    NbMovedFiles = MyPackage.MovePictures(path4pics,destpath,Mylogger)
     if NbMovedFiles <>0: 
         Mylogger.info('Numbers of files moved :%s',NbMovedFiles)
     else:
