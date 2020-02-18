@@ -42,7 +42,7 @@ def CreateLogger():
     formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
     # create handler to redirect log to a file in 'append' mode 
     # with a backup and a maximal length to 1Mo
-    if not os.path.exists('../log/activity.log'):
+    if not os.path.exists('../log'):
         os.makedirs('../log')
     
     file_handler = RotatingFileHandler('../log/activity.log', 'a', 1000000, 1)
@@ -100,12 +100,11 @@ def GetFileDateInfo(filename):
 
     # Read File
     open_file = open(filename, 'rb')
-    print 'get date'
     tags = exifread.process_file(open_file,stop_tag='Image DateTime',details=False,debug=False)
-    print 'bob'
+    
+    
     try:
         date_string = tags['Image DateTime']
-        print 'bob2'
         date_object = datetime.datetime.strptime(date_string.values, '%Y:%m:%d %H:%M:%S')
         #date
         day = str(date_object.day).zfill(2)
