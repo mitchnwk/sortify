@@ -23,6 +23,7 @@
 import os, os.path
 import exifread
 import datetime
+import hashlib
 import logging
 from logging.handlers import RotatingFileHandler
 import shutil 
@@ -57,7 +58,8 @@ def CreateLogger():
     return logger
 
 #Detect duplicate by computing a Hashkey
-def DetectDuplicatedPics(path4pics,path2trash,mylogger):    
+def DetectDuplicatedPics(path4pics,path2trash,mylogger):  
+
     dicoDupli = {}
     movedItems = 0    
     for root, dirs, files in os.walk(path4pics):
@@ -95,11 +97,15 @@ def DetectDuplicatedPics(path4pics,path2trash,mylogger):
     return movedItems
 
 def GetFileDateInfo(filename):
+
     # Read File
     open_file = open(filename, 'rb')
+    print 'get date'
     tags = exifread.process_file(open_file,stop_tag='Image DateTime',details=False,debug=False)
+    print 'bob'
     try:
         date_string = tags['Image DateTime']
+        print 'bob2'
         date_object = datetime.datetime.strptime(date_string.values, '%Y:%m:%d %H:%M:%S')
         #date
         day = str(date_object.day).zfill(2)
@@ -140,7 +146,8 @@ def RenamePictures(path4pics,mylogger):
                     mylogger.info('unable to retrieve EXIF info for: %s', fileName)
     return NbRenamedFiles
 
-def MovePictures(path4pics,mylogger):
+def MovePictures(path4pics,dest4pics,mylogger):
+
 #Move renamed pictures  using their exif date
     NbMovedFiles = 0
     for root, dirs, files in os.walk(path4pics):
@@ -152,7 +159,7 @@ def MovePictures(path4pics,mylogger):
                     #get date info 
                     dateFile = GetFileDateInfo(fileName)      
                     # compute new destination path based on Year
-                    outFilePath = path4pics + os.sep + dateFile[2]
+                    outFilePath = dest4pics + os.sep + dateFile[2]
                     newFileName = outFilePath + os.sep + file              
                     # check if destination path is existing create if not
                     if not os.path.exists(outFilePath):
@@ -177,3 +184,21 @@ def MovePictures(path4pics,mylogger):
                 except:
                     print 'File has no exif data skipped ' + file
     return NbMovedFiles
+
+def hash_file(filename):
+
+   # make a hash object
+   h = hashlib.sha1()
+
+   # open file for reading in binary mode
+   with open(filename,'rb') as file:
+
+       # loop till the end of the file
+       chunk = 0
+       while chunk != b'':
+           # read only 1024 bytes at a time
+           chunk = file.read(1024)
+           h.update(chunk)
+
+   # return the hex representation of digest
+   return h.hexdigest()
