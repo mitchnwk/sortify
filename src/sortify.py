@@ -36,22 +36,27 @@ def main(argv):
     ShortOptions = "hp:d:t:"
     LongOptions = ["help","path","dest","trash"]
     try:
-        opts,args = getopt.getopt(argv,ShortOptions,LongOptions)
+        # parsing argument
+        arguments, values = getopt.getopt(argv,ShortOptions,LongOptions)        
+        # checking argument
+        for currentArgument, currentValue in arguments:
+            if currentArgument in ("-h","--help"):
+                Usage()
+                sys.exit(2)
+            elif currentArgument in ("-p","--path"):
+                path4pics = currentValue
+            elif currentArgument in ("-t","--trash"):
+                path2trash = currentValue
+            elif currentArgument in ("-d","--dest"):
+                destpath = currentValue
+            else:
+                assert False, "Unhandled option"
+                #usage()
+                #sys.exit(2)
     except getopt.error as err:
         Usage()
         sys.exit(2)
-    for opt, arg in opts:
-        if opt in ("-h","--help"):
-            Usage()
-            sys.exit()
-        elif opt in ("-p","--path"):
-            path4pics = arg
-        elif opt in ("-t","--trash"):
-            path2trash = arg
-        elif opt in ("-d","--dest"):
-            destpath = arg
-        
-
+    
 
     if path4pics == "" or path2trash == "" or destpath == "":
         print "missing args"
