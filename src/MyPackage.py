@@ -157,31 +157,34 @@ def MovePictures(path4pics, dest4pics, mylogger):
                 try:
                     # get date info
                     dateFile = GetFileDateInfo(fileName)
-                    # compute new destination path based on Year
-                    outFilePath = dest4pics + os.sep + dateFile[2]
-                    newFileName = outFilePath + os.sep + file
-                    # check if destination path is existing create if not
-                    if not os.path.exists(outFilePath):
-                        os.makedirs(outFilePath)
-                    # check if file already exists
-                    if not os.path.exists(newFileName):
-                        print 'new file , ready to copy :' + file
-                        # copy the picture to the organised structure
-                        shutil.copy2(fileName, newFileName)
-                        # verify if file is the same and display output
-                        print 'moved done'
-                        if hash_file(fileName) == hash_file(newFileName):
-                            print 'File copied with success to ' + outFilePath
-                            os.remove(fileName)
-                            mylogger.info('%s moved to :%s', file, outFilePath)
-                            NbMovedFiles += 1
+                    if dateFile is not None:
+                        # compute new destination path based on Year
+                        outFilePath = dest4pics + os.sep + dateFile[2]
+                        newFileName = outFilePath + os.sep + file
+                        # check if destination path is existing create if not
+                        if not os.path.exists(outFilePath):
+                            os.makedirs(outFilePath)
+                        # check if file already exists
+                        if not os.path.exists(newFileName):
+                            print 'new file , ready to copy :' + file
+                            # copy the picture to the organised structure
+                            shutil.copy2(fileName, newFileName)
+                            # verify if file is the same and display output
+                            print 'moved done'
+                            if hash_file(fileName) == hash_file(newFileName):
+                                print 'File copied with success to ' + outFilePath
+                                os.remove(fileName)
+                                mylogger.info('%s moved to :%s', file, outFilePath)
+                                NbMovedFiles += 1
+                            else:
+                                print 'File failed to copy :( ' + file
+                                mylogger.info('%s failed to be moved to :%s', fileName, outFilePath)
                         else:
-                            print 'File failed to copy :( ' + file
-                            mylogger.info('%s failed to be moved to :%s', fileName, outFilePath)
+                            mylogger.info('%s already exists in %s. Skipped...', fileName, outFilePath)
                     else:
-                        mylogger.info('%s already exists in %s. Skipped...', fileName, outFilePath)
+                        mylogger.info('%s does not have EXIF date. Skipped...', fileName)
                 except:
-                    print 'File has no exif data skipped ' + file
+                    print '%s does not have EXIF data. Skipped ' + file
     return NbMovedFiles
 
 
