@@ -55,9 +55,8 @@ def main(argv):
             elif currentArgument in ("-d", "--dest"):
                 destpath = currentValue
             else:
-                assert False, "Unhandled option"
-                # usage()
-                # sys.exit(2)
+                usage()
+                sys.exit(2)
     except getopt.error as err:
         Usage()
         sys.exit(2)
