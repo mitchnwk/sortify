@@ -3,7 +3,7 @@
 
 ## Copyright (C) 2019 Michel Nowak <mitch@mitchnwk.com
 ## This file is part of Sortify
- 
+
 
 ## Sortify is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -20,43 +20,47 @@
 ## Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 
-
 import MyPackage
-import sys, getopt, os
+import sys
+import getopt
+import os
 
 __version__ = '0.1.0'
+
+
 def Usage():
     print 'Usage: sortify.py -p <path4pics> -d <destpath> -t <path2trash>'
     return
+
+
 def main(argv):
-    path2trash=""
-    path4pics=""
-    destpath=""
-    Mylogger=MyPackage.CreateLogger()
+    path2trash = ""
+    path4pics = ""
+    destpath = ""
+    Mylogger = MyPackage.CreateLogger()
     ShortOptions = "hp:d:t:"
-    LongOptions = ["help","path","dest","trash"]
+    LongOptions = ["help", "path", "dest", "trash"]
     try:
         # parsing argument
-        arguments, values = getopt.getopt(argv,ShortOptions,LongOptions)        
+        arguments, values = getopt.getopt(argv, ShortOptions, LongOptions)
         # checking argument
         for currentArgument, currentValue in arguments:
-            if currentArgument in ("-h","--help"):
+            if currentArgument in ("-h", "--help"):
                 Usage()
                 sys.exit(2)
-            elif currentArgument in ("-p","--path"):
+            elif currentArgument in ("-p", "--path"):
                 path4pics = currentValue
-            elif currentArgument in ("-t","--trash"):
+            elif currentArgument in ("-t", "--trash"):
                 path2trash = currentValue
-            elif currentArgument in ("-d","--dest"):
+            elif currentArgument in ("-d", "--dest"):
                 destpath = currentValue
             else:
                 assert False, "Unhandled option"
-                #usage()
-                #sys.exit(2)
+                # usage()
+                # sys.exit(2)
     except getopt.error as err:
         Usage()
         sys.exit(2)
-    
 
     if path4pics == "" or path2trash == "" or destpath == "":
         print "missing args"
@@ -65,15 +69,15 @@ def main(argv):
     elif path4pics == path2trash:
         print "pics path and trash path must different"
         Usage()
-        exit()    
+        exit()
     elif path4pics == destpath:
         print "pics path and dest path must different"
         Usage()
-        exit()        
+        exit()
     elif destpath == path2trash:
         print "pics path dest and trash path must different"
         Usage()
-        exit()    
+        exit()
     # check if trash path is not existing; create it otherwise
     if not os.path.exists(path2trash):
         os.makedirs(path2trash)
@@ -84,24 +88,25 @@ def main(argv):
         print "Picture directory does not exist. Please check"
         exit()
     Mylogger.info('detect duplicates...')
-    NbTrashedFiles = MyPackage.DetectDuplicatedPics(path4pics,path2trash,Mylogger)
-    if NbTrashedFiles <>0: 
-        Mylogger.info('Numbers of files trashed :%s',NbTrashedFiles)
+    NbTrashedFiles = MyPackage.DetectDuplicatedPics(path4pics, path2trash, Mylogger)
+    if NbTrashedFiles != 0:
+        Mylogger.info('Numbers of files trashed :%s', NbTrashedFiles)
     else:
         Mylogger.info('No duplicated pictures found!')
     Mylogger.info('renaming remaining file...')
-    NbRenamedFiles = MyPackage.RenamePictures(path4pics,Mylogger)
-    if NbRenamedFiles <>0: 
-        Mylogger.info('Numbers of files renamed :%s',NbRenamedFiles)
+    NbRenamedFiles = MyPackage.RenamePictures(path4pics, Mylogger)
+    if NbRenamedFiles != 0:
+        Mylogger.info('Numbers of files renamed :%s', NbRenamedFiles)
     else:
         Mylogger.info('No file renamed!')
     Mylogger.info('Sort remaining files...')
-    NbMovedFiles = MyPackage.MovePictures(path4pics,destpath,Mylogger)
-    if NbMovedFiles <>0: 
-        Mylogger.info('Numbers of files moved :%s',NbMovedFiles)
+    NbMovedFiles = MyPackage.MovePictures(path4pics, destpath, Mylogger)
+    if NbMovedFiles != 0:
+        Mylogger.info('Numbers of files moved :%s', NbMovedFiles)
     else:
         Mylogger.info('No file moved!')
-    return 
+    return
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
