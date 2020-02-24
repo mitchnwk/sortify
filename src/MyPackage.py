@@ -75,8 +75,9 @@ def DetectDuplicatedPics(path4pics, path2trash, mylogger):
                     hashKey = str(stat.st_size) + str(fileStream.read(100))
                     mylogger.info('hashKey for %s = %s', file, hashKey)
                     fileStream.close()
-                except:
+                except Exception as e:
                     mylogger.info('fail to open :%s', root + os.sep + file)
+                    print e.message
 
                 if hashKey in dicoDupli:
                     # file already find in the dictionnary, add it to the dictionnary
@@ -85,9 +86,10 @@ def DetectDuplicatedPics(path4pics, path2trash, mylogger):
                     mylogger.info('%s moving to trash', file)
                     try:
                         shutil.move(root + os.sep + file, path2trash)
-                    except:
+                    except Exception as e:
                         mylogger.info('%s already in trash', file)
                         os.remove(root + os.sep + file)
+                        print e.message
                     movedItems += 1
                 else:
                     # new file found. Add it in the dictionnary
@@ -117,8 +119,9 @@ def GetFileDateInfo(filename):
         # New fileName
         output = [day, month, year, year + month + day + '_' + hour + minute + second]
         return output
-    except:
-        return None
+    except Exception as e:
+        print e.message
+    return None
 
 
 def RenamePictures(path4pics, mylogger):
@@ -152,7 +155,7 @@ def MovePictures(path4pics, dest4pics, mylogger):
     for root, dirs, files in os.walk(path4pics):
         for file in files:
             if os.path .splitext(file)[1] in listExt:
-                extension = os.path .splitext(file)[1]
+                # extension = os.path .splitext(file)[1]
                 fileName = root + os.sep + file
                 try:
                     # get date info
@@ -183,8 +186,9 @@ def MovePictures(path4pics, dest4pics, mylogger):
                             mylogger.info('%s already exists in %s. Skipped...', fileName, outFilePath)
                     else:
                         mylogger.info('%s does not have EXIF date. Skipped...', fileName)
-                except:
+                except Exception as e:
                     print '%s does not have EXIF data. Skipped ' + file
+                    print e.message
     return NbMovedFiles
 
 
