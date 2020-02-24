@@ -3,7 +3,7 @@
 
 ## Copyright (C) 2020 Michel Nowak <mitch@mitchnwk.com
 ## This file is part of Sortify
- 
+
 
 ## Sortify is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -26,10 +26,11 @@ import datetime
 import hashlib
 import logging
 from logging.handlers import RotatingFileHandler
-import shutil 
+import shutil
 
 # Supported files
-listExt = ['.jpg', '.png', '.gif', '.bmp', '.JPG', '.BMP', '.GIF','.PNG']
+listExt = ['.jpg', '.png', '.gif', '.bmp', '.JPG', '.BMP', '.GIF', '.PNG']
+
 
 def CreateLogger():
     # create logger object used to write logs
@@ -40,11 +41,11 @@ def CreateLogger():
     # create a formatter to associate time
     # and severity to each message to be written in the log
     formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
-    # create handler to redirect log to a file in 'append' mode 
+    # create handler to redirect log to a file in 'append' mode
     # with a backup and a maximal length to 1Mo
     if not os.path.exists('../log'):
         os.makedirs('../log')
-    
+
     file_handler = RotatingFileHandler('../log/activity.log', 'a', 1000000, 1)
     # add this handler to logger
     file_handler.setLevel(logging.DEBUG)
@@ -57,124 +58,123 @@ def CreateLogger():
     logger.addHandler(steam_handler)
     return logger
 
-#Detect duplicate by computing a Hashkey
-def DetectDuplicatedPics(path4pics,path2trash,mylogger):  
 
+def DetectDuplicatedPics(path4pics, path2trash, mylogger):
+    # Detect duplicate by computing a Hashkey
     dicoDupli = {}
-    movedItems = 0    
+    movedItems = 0
     for root, dirs, files in os.walk(path4pics):
         for file in files:
             if os.path .splitext(file)[1] in listExt:
                 try:
-                    fileStream = open(root+os.sep+file,'rb')
-                    mylogger.info('open :%s', root+os.sep+file)
-                    stat = os.stat(root+os.sep+file)
-                    #create a key based on file length and 100 first bytes of the file
-                    #could be repplacerd by a hash computation (quite slow) : hashKey = hash(fileStream .read())
+                    fileStream = open(root + os.sep + file, 'rb')
+                    mylogger.info('open :%s', root + os.sep + file)
+                    stat = os.stat(root + os.sep + file)
+                    # create a key based on file length and 100 first bytes of the file
+                    # could be repplacerd by a hash computation (quite slow) : hashKey = hash(fileStream .read())
                     hashKey = str(stat.st_size) + str(fileStream.read(100))
-                    mylogger.info('hashKey for %s = %s',file,hashKey)
+                    mylogger.info('hashKey for %s = %s', file, hashKey)
                     fileStream.close()
                 except:
-                    mylogger.info('fail to open :%s', root+os.sep+file)
-            
+                    mylogger.info('fail to open :%s', root + os.sep + file)
+
                 if hashKey in dicoDupli:
                     # file already find in the dictionnary, add it to the dictionnary
-                    dicoDupli[hashKey].append(root+os.sep+file)
+                    dicoDupli[hashKey].append(root + os.sep + file)
                     mylogger.info('hash already find :%s', dicoDupli)
                     mylogger.info('%s moving to trash', file)
                     try:
-                        shutil.move(root+os.sep+file,path2trash)                    
+                        shutil.move(root + os.sep + file, path2trash)
                     except:
                         mylogger.info('%s already in trash', file)
-                        os.remove(root+os.sep+file)
-                    movedItems+=1
+                        os.remove(root + os.sep + file)
+                    movedItems += 1
                 else:
                     # new file found. Add it in the dictionnary
-                    dicoDupli[hashKey] = [root+os.sep+file]
+                    dicoDupli[hashKey] = [root + os.sep + file]
                     mylogger.info('new Hash added:%s', dicoDupli)
             else:
                 mylogger.info('no file found to analysis')
     return movedItems
 
-def GetFileDateInfo(filename):
 
+def GetFileDateInfo(filename):
     # Read File
     open_file = open(filename, 'rb')
-    tags = exifread.process_file(open_file,stop_tag='Image DateTime',details=False,debug=False)
-    
-    
+    tags = exifread.process_file(open_file, stop_tag='Image DateTime', details=False, debug=False)
+
     try:
         date_string = tags['Image DateTime']
         date_object = datetime.datetime.strptime(date_string.values, '%Y:%m:%d %H:%M:%S')
-        #date
+        # date
         day = str(date_object.day).zfill(2)
         month = str(date_object.month).zfill(2)
         year = str(date_object.year)
-        #time
+        # time
         second = str(date_object.second).zfill(2)
         minute = str(date_object.minute).zfill(2)
         hour = str(date_object.hour).zfill(2)
-        #New fileName
-        output = [day,month,year,year + month + day + '_' + hour + minute + second]
+        # New fileName
+        output = [day, month, year, year + month + day + '_' + hour + minute + second]
         return output
     except:
         return None
 
-def RenamePictures(path4pics,mylogger):
-    #rename all remaining single files using their exif date
+
+def RenamePictures(path4pics, mylogger):
+    # rename all remaining single files using their exif date
     NbRenamedFiles = 0
-    number = [0,1,2,3,4,5,6,7,8,9]
     for root, dirs, files in os.walk(path4pics):
         for file in files:
             if os.path .splitext(file)[1] in listExt:
                 extension = os.path .splitext(file)[1]
                 fileName = root + os.sep + file
                 # check if filename starts with a date
-                #[date,sep,part2] = file.partition('_')
-                #if date.isdigit():
+                # [date,sep,part2] = file.partition('_')
+                # if date.isdigit():
                 #    mylogger.info('fileName already has a date')
-                #else:
+                # else:
                 mylogger.info('get EXIF info for: %s', fileName)
-                dateFile = GetFileDateInfo(fileName)                   
-                if dateFile <> None:                        
-                    NewFileName = root + os.sep + dateFile[3] + extension                                               
-                    os.rename(fileName,NewFileName)
+                dateFile = GetFileDateInfo(fileName)
+                if dateFile is not None:
+                    NewFileName = root + os.sep + dateFile[3] + extension
+                    os.rename(fileName, NewFileName)
                     mylogger.info('%s renamed in :%s', fileName, NewFileName)
-                    NbRenamedFiles+=1                   
+                    NbRenamedFiles += 1
                 else:
                     mylogger.info('unable to retrieve EXIF info for: %s', fileName)
     return NbRenamedFiles
 
-def MovePictures(path4pics,dest4pics,mylogger):
 
-#Move renamed pictures  using their exif date
+def MovePictures(path4pics, dest4pics, mylogger):
+    # Move renamed pictures  using their exif date
     NbMovedFiles = 0
     for root, dirs, files in os.walk(path4pics):
         for file in files:
             if os.path .splitext(file)[1] in listExt:
-                extension = os.path .splitext(file)[1] 
+                extension = os.path .splitext(file)[1]
                 fileName = root + os.sep + file
                 try:
-                    #get date info 
-                    dateFile = GetFileDateInfo(fileName)      
+                    # get date info
+                    dateFile = GetFileDateInfo(fileName)
                     # compute new destination path based on Year
                     outFilePath = dest4pics + os.sep + dateFile[2]
-                    newFileName = outFilePath + os.sep + file              
+                    newFileName = outFilePath + os.sep + file
                     # check if destination path is existing create if not
                     if not os.path.exists(outFilePath):
                         os.makedirs(outFilePath)
                     # check if file already exists
-                    if not os.path.exists(newFileName):     
-                        print 'new file , ready to copy : ' + file       
+                    if not os.path.exists(newFileName):
+                        print 'new file , ready to copy :' + file
                         # copy the picture to the organised structure
-                        shutil.copy2(fileName,newFileName)  
+                        shutil.copy2(fileName, newFileName)
                         # verify if file is the same and display output
                         print 'moved done'
                         if hash_file(fileName) == hash_file(newFileName):
                             print 'File copied with success to ' + outFilePath
                             os.remove(fileName)
                             mylogger.info('%s moved to :%s', file, outFilePath)
-                            NbMovedFiles+=1                   
+                            NbMovedFiles += 1
                         else:
                             print 'File failed to copy :( ' + file
                             mylogger.info('%s failed to be moved to :%s', fileName, outFilePath)
@@ -184,20 +184,20 @@ def MovePictures(path4pics,dest4pics,mylogger):
                     print 'File has no exif data skipped ' + file
     return NbMovedFiles
 
+
 def hash_file(filename):
+    # make a hash object
+    h = hashlib.sha1()
 
-   # make a hash object
-   h = hashlib.sha1()
+    # open file for reading in binary mode
+    with open(filename, 'rb') as file:
 
-   # open file for reading in binary mode
-   with open(filename,'rb') as file:
+        # loop till the end of the file
+        chunk = 0
+        while chunk != b'':
+            # read only 1024 bytes at a time
+            chunk = file.read(1024)
+            h.update(chunk)
 
-       # loop till the end of the file
-       chunk = 0
-       while chunk != b'':
-           # read only 1024 bytes at a time
-           chunk = file.read(1024)
-           h.update(chunk)
-
-   # return the hex representation of digest
-   return h.hexdigest()
+    # return the hex representation of digest
+    return h.hexdigest()
