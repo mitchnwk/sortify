@@ -61,42 +61,47 @@ def CreateLogger():
 
 def DetectDuplicatedPics(path4pics, path2trash, mylogger):
     # Detect duplicate by computing a Hashkey
+    # move it to path2trash
     dicoDupli = {}
     movedItems = 0
+    hashKey = 0
     for root, dirs, files in os.walk(path4pics):
         for file in files:
+            mylogger.info('%s under analysis...', file)
             if os.path .splitext(file)[1] in listExt:
                 try:
                     fileStream = open(root + os.sep + file, 'rb')
                     mylogger.info('open :%s', root + os.sep + file)
                     stat = os.stat(root + os.sep + file)
                     # create a key based on file length and 100 first bytes of the file
-                    # could be repplacerd by a hash computation (quite slow) : hashKey = hash(fileStream .read())
+                    # could be replaced by a hash computation (quite slow) : hashKey = hash(fileStream .read())
                     hashKey = str(stat.st_size) + str(fileStream.read(100))
                     mylogger.info('hashKey for %s = %s', file, hashKey)
                     fileStream.close()
+                    if hashKey is not None:
+                        if hashKey in dicoDupli:
+                            # file already find in the dictionnary, add it to the dictionnary
+                            dicoDupli[hashKey].append(root + os.sep + file)
+                            mylogger.info('hash already find :%s', dicoDupli)
+                            mylogger.info('%s moving to trash', file)
+                            try:
+                                shutil.move(root + os.sep + file, path2trash)
+                            except Exception as e:
+                                mylogger.info('%s already in trash', file)
+                                os.remove(root + os.sep + file)
+                                print e.message
+                            movedItems += 1
+                        else:
+                            # new file found. Add it in the dictionnary
+                            dicoDupli[hashKey] = [root + os.sep + file]
+                            mylogger.info('new Hash added:%s', dicoDupli)
+                    else:
+                        mylogger.info('no hash computed for :%s', file)
                 except Exception as e:
-                    mylogger.info('fail to open :%s', root + os.sep + file)
+                    mylogger.info('failed to open :%s -> File skipped.', root + os.sep + file)
                     print e.message
-
-                if hashKey in dicoDupli:
-                    # file already find in the dictionnary, add it to the dictionnary
-                    dicoDupli[hashKey].append(root + os.sep + file)
-                    mylogger.info('hash already find :%s', dicoDupli)
-                    mylogger.info('%s moving to trash', file)
-                    try:
-                        shutil.move(root + os.sep + file, path2trash)
-                    except Exception as e:
-                        mylogger.info('%s already in trash', file)
-                        os.remove(root + os.sep + file)
-                        print e.message
-                    movedItems += 1
-                else:
-                    # new file found. Add it in the dictionnary
-                    dicoDupli[hashKey] = [root + os.sep + file]
-                    mylogger.info('new Hash added:%s', dicoDupli)
             else:
-                mylogger.info('no file found to analysis')
+                mylogger.info('unsupported ext file: %s -> File skipped.', file)
     return movedItems
 
 
@@ -121,7 +126,7 @@ def GetFileDateInfo(filename):
         return output
     except Exception as e:
         print e.message
-    return None
+        return None
 
 
 def RenamePictures(path4pics, mylogger):
@@ -129,6 +134,7 @@ def RenamePictures(path4pics, mylogger):
     NbRenamedFiles = 0
     for root, dirs, files in os.walk(path4pics):
         for file in files:
+            mylogger.info('%s under analysis...', file)
             if os.path .splitext(file)[1] in listExt:
                 extension = os.path .splitext(file)[1]
                 fileName = root + os.sep + file
@@ -138,22 +144,29 @@ def RenamePictures(path4pics, mylogger):
                 #    mylogger.info('fileName already has a date')
                 # else:
                 mylogger.info('get EXIF info for: %s', fileName)
-                dateFile = GetFileDateInfo(fileName)
-                if dateFile is not None:
-                    NewFileName = root + os.sep + dateFile[3] + extension
-                    os.rename(fileName, NewFileName)
-                    mylogger.info('%s renamed in :%s', fileName, NewFileName)
-                    NbRenamedFiles += 1
-                else:
-                    mylogger.info('unable to retrieve EXIF info for: %s', fileName)
+                try:
+                    dateFile = GetFileDateInfo(fileName)
+                    if dateFile is not None:
+                        NewFileName = root + os.sep + dateFile[3] + extension
+                        os.rename(fileName, NewFileName)
+                        mylogger.info('%s renamed in :%s', fileName, NewFileName)
+                        NbRenamedFiles += 1
+                    else:
+                        mylogger.info('unable to retrieve EXIF info for: %s -> File skipped', fileName)
+                except Exception as e:
+                    mylogger.info('failed to open :%s -> File skipped.', file)
+                    print e.message
+            else:
+                mylogger.info('unsupported ext file: %s -> File skipped.', file)
     return NbRenamedFiles
 
 
 def MovePictures(path4pics, dest4pics, mylogger):
-    # Move renamed pictures  using their exif date
+    # Move renamed pictures using their exif date
     NbMovedFiles = 0
     for root, dirs, files in os.walk(path4pics):
         for file in files:
+            mylogger.info('%s under analysis...', file)
             if os.path .splitext(file)[1] in listExt:
                 # extension = os.path .splitext(file)[1]
                 fileName = root + os.sep + file
@@ -164,16 +177,17 @@ def MovePictures(path4pics, dest4pics, mylogger):
                         # compute new destination path based on Year
                         outFilePath = dest4pics + os.sep + dateFile[2]
                         newFileName = outFilePath + os.sep + file
-                        # check if destination path is existing create if not
+                        # check if destination path is existing create it otherwise
                         if not os.path.exists(outFilePath):
                             os.makedirs(outFilePath)
                         # check if file already exists
                         if not os.path.exists(newFileName):
-                            print 'new file , ready to copy :' + file
+                            print 'new file, ready to copy :' + file
                             # copy the picture to the organised structure
                             shutil.copy2(fileName, newFileName)
                             # verify if file is the same and display output
                             print 'moved done'
+                            # check if hash match
                             if hash_file(fileName) == hash_file(newFileName):
                                 print 'File copied with success to ' + outFilePath
                                 os.remove(fileName)
@@ -183,16 +197,19 @@ def MovePictures(path4pics, dest4pics, mylogger):
                                 print 'File failed to copy :( ' + file
                                 mylogger.info('%s failed to be moved to :%s', fileName, outFilePath)
                         else:
-                            mylogger.info('%s already exists in %s. Skipped...', fileName, outFilePath)
+                            mylogger.info('%s already exists in %s -> File Skipped.', fileName, outFilePath)
                     else:
-                        mylogger.info('%s does not have EXIF date. Skipped...', fileName)
+                        mylogger.info('%s does not have EXIF date. -> File Skipped.', fileName)
                 except Exception as e:
-                    print '%s does not have EXIF data. Skipped ' + file
+                    mylogger.info('failed to open :%s -> File skipped.', file)
                     print e.message
+            else:
+                mylogger.info('unsupported ext file: %s -> File skipped.', file)
     return NbMovedFiles
 
 
 def hash_file(filename):
+    # compute a sha1 on input file
     # make a hash object
     h = hashlib.sha1()
 
