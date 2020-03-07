@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 
-## Copyright (C) 2019 Michel Nowak <mitch@mitchnwk.com
+## Copyright (C) 2020 Michel Nowak <mitch@mitchnwk.com
 ## This file is part of Sortify
 
 
@@ -24,6 +24,7 @@ import MyPackage
 import sys
 import getopt
 import os
+import time
 
 __version__ = '0.1.0'
 
@@ -89,22 +90,25 @@ def main(argv):
     Mylogger.info('detect duplicates...')
     NbTrashedFiles = MyPackage.DetectDuplicatedPics(path4pics, path2trash, Mylogger)
     if NbTrashedFiles != 0:
-        Mylogger.info('Numbers of files trashed :%s', NbTrashedFiles)
+        Mylogger.info('Numbers of dupplicated files trashed :%s', NbTrashedFiles)
     else:
         Mylogger.info('No duplicated pictures found!')
-    Mylogger.info('renaming remaining file...')
+    Mylogger.info('renaming remaining file in 1 sec...')
+    time.sleep(1)
     NbRenamedFiles = MyPackage.RenamePictures(path4pics, Mylogger)
     if NbRenamedFiles != 0:
         Mylogger.info('Numbers of files renamed :%s', NbRenamedFiles)
     else:
         Mylogger.info('No file renamed!')
-    Mylogger.info('Sort remaining files...')
+    Mylogger.info('Sort by year directory remaining files in 1 sec...')
+    time.sleep(1)
     NbMovedFiles = MyPackage.MovePictures(path4pics, destpath, Mylogger)
     if NbMovedFiles != 0:
         Mylogger.info('Numbers of files moved :%s', NbMovedFiles)
     else:
         Mylogger.info('No file moved!')
     return
+    Mylogger.info('Job Done. Goodbye!')
 
 
 if __name__ == "__main__":
