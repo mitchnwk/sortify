@@ -41,6 +41,7 @@ def CreateLogger():
     # create a formatter to associate time
     # and severity to each message to be written in the log
     formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
+    consoleformatter = logging.Formatter('%(asctime)s: %(message)s')
     # create handler to redirect log to a file in 'append' mode
     # with a backup and a maximal length to 1Mo
     if not os.path.exists('../log'):
@@ -54,7 +55,8 @@ def CreateLogger():
 
     # create a second handler to redirect each log to the console
     steam_handler = logging.StreamHandler()
-    steam_handler.setLevel(logging.DEBUG)
+    steam_handler.setLevel(logging.INFO)
+    steam_handler.setFormatter(consoleformatter)
     logger.addHandler(steam_handler)
     return logger
 
@@ -76,7 +78,7 @@ def DetectDuplicatedPics(path4pics, path2trash, mylogger):
                     # create a key based on file length and 100 first bytes of the file
                     # could be replaced by a hash computation (quite slow) : hashKey = hash(fileStream .read())
                     hashKey = str(stat.st_size) + str(fileStream.read(100))
-                    mylogger.info('hashKey for %s = %s', file, hashKey)
+                    mylogger.debug('hashKey for %s = %s', file, hashKey)
                     fileStream.close()
                     if hashKey is not None:
                         if hashKey in dicoDupli:
@@ -94,14 +96,15 @@ def DetectDuplicatedPics(path4pics, path2trash, mylogger):
                         else:
                             # new file found. Add it in the dictionnary
                             dicoDupli[hashKey] = [root + os.sep + file]
-                            mylogger.info('new Hash added:%s', dicoDupli)
+                            mylogger.debug('new Hash added:%s', dicoDupli)
+                            mylogger.info('new Hash added for: %s', file)
                     else:
                         mylogger.info('no hash computed for :%s', file)
                 except Exception as e:
-                    mylogger.info('failed to open :%s -> File skipped.', root + os.sep + file)
+                    mylogger.info('failed to open :%s -> File Skipped.', root + os.sep + file)
                     print e.message
             else:
-                mylogger.info('unsupported ext file: %s -> File skipped.', file)
+                mylogger.info('unsupported ext file: %s -> File Skipped.', file)
     return movedItems
 
 
@@ -143,21 +146,24 @@ def RenamePictures(path4pics, mylogger):
                 # if date.isdigit():
                 #    mylogger.info('fileName already has a date')
                 # else:
-                mylogger.info('get EXIF info for: %s', fileName)
+                # mylogger.info('get EXIF info for: %s', fileName)
                 try:
                     dateFile = GetFileDateInfo(fileName)
                     if dateFile is not None:
                         NewFileName = root + os.sep + dateFile[3] + extension
-                        os.rename(fileName, NewFileName)
-                        mylogger.info('%s renamed in :%s', fileName, NewFileName)
-                        NbRenamedFiles += 1
+                        if not os.path.exists(NewFileName):
+                            os.rename(fileName, NewFileName)
+                            mylogger.info('%s renamed in :%s', fileName, NewFileName)
+                            NbRenamedFiles += 1
+                        else:
+                            mylogger.info('%s already present. -> File Skipped', fileName, NewFileName)
                     else:
-                        mylogger.info('unable to retrieve EXIF info for: %s -> File skipped', fileName)
+                        mylogger.info('unable to retrieve EXIF info for: %s -> File Skipped', fileName)
                 except Exception as e:
-                    mylogger.info('failed to open :%s -> File skipped.', file)
+                    mylogger.info('failed to open :%s -> File Skipped.', file)
                     print e.message
             else:
-                mylogger.info('unsupported ext file: %s -> File skipped.', file)
+                mylogger.info('unsupported ext file: %s -> File Skipped.', file)
     return NbRenamedFiles
 
 
@@ -201,10 +207,10 @@ def MovePictures(path4pics, dest4pics, mylogger):
                     else:
                         mylogger.info('%s does not have EXIF date. -> File Skipped.', fileName)
                 except Exception as e:
-                    mylogger.info('failed to open :%s -> File skipped.', file)
+                    mylogger.info('failed to open :%s -> File Skipped.', file)
                     print e.message
             else:
-                mylogger.info('unsupported ext file: %s -> File skipped.', file)
+                mylogger.info('unsupported ext file: %s -> File Skipped.', file)
     return NbMovedFiles
 
 
